@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Perceptrón con 2 Clases</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        canvas {
+            border: 1px solid black;
+        }
+    </style>
+</head>
+<body>
+    <h2>Clasificación con Perceptrón</h2>
+    <p><button onclick="entrenarYGraficar()">Entrenar y Graficar</button></p>
+    <canvas id="grafica" width="600" height="400"></canvas>
+    <p id="pesos"></p>
+
+    <script>
+        // 1. Crear puntos
+        const clase0 = [];
+        const clase1 = [];
+        while (clase0.length < 20) {
+            const x = Math.random() * 1.5 + 0.5;
+            const y = Math.random() * 1.5 + 0.5;
+            clase0.push({ x, y });
+        }
+        while (clase1.length < 20) {
+            const x = Math.random() * 1.5 + 3.5;
+            const y = Math.random() * 1.5 + 3.5;
+            clase1.push({ x, y });
+        }
+
+        // 2. Preparar entradas para el perceptrón
+        const X = [...clase0, ...clase1].map(p => [p.x, p.y]);
+        const y = Array(20).fill(0).concat(Array(20).fill(1));
+
+        function entrenarPerceptron() {
+            let w = [Math.random(), Math.random()];
+            let b = Math.random();
+            const eta = 0.1;
+
+            const forward = (x) => {
+                const suma = w[0]*x[0] + w[1]*x[1] + b;
+                return suma > 0 ? 1 : 0;
+            };
+
+            for (let epoch = 0; epoch < 200; epoch++) {
+                for (let i = 0; i < X.length; i++) {
+                    const y_pred = forward(X[i]);
+                    const error = y[i] - y_pred;
+                    w[0] += eta * error * X[i][0];
+                    w[1] += eta * error * X[i][1];
+                    b += eta * error;
+                }
+            }
+
+            return { w, b };
+        }
+
+        function entrenarYGraficar() {
+            const { w, b } = entrenarPerceptron();
+            document.getElementById("pesos").innerText =
+                `w0 (bias): ${b.toFixed(2)}, w1: ${w[0].toFixed(2)}, w2: ${w[1].toFixed(2)}`;
+
+            // Generar puntos de la línea
+            const x_vals = [0, 6];
+            const y_vals = x_vals.map(x => -(w[0]*x + b) / w[1]);
+
+            const ctx = document.getElementById('grafica').getContext('2d');
+            new Chart(ctx, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Clase 0',
+                            data: clase0,
+                            backgroundColor: 'red',
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Clase 1',
+                            data: clase1,
+                            backgroundColor: 'blue',
+                            pointRadius: 4
+                        },
+                        {
+                            label: 'Frontera de decisión',
+                            type: 'line',
+                            data: [
+                                { x: x_vals[0], y: y_vals[0] },
+                                { x: x_vals[1], y: y_vals[1] }
+                            ],
+                            borderColor: 'green',
+                            borderWidth: 2,
+                            fill: false,
+                            showLine: true
+                        }
+                    ]
+                },
+                options: {
+                    scales: {
+                        x: { min: 0, max: 6 },
+                        y: { min: 0, max: 6 }
+                    }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
